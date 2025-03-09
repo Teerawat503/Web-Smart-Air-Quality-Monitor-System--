@@ -1,33 +1,27 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaSmog, FaChevronDown, FaChevronUp } from 'react-icons/fa';
-import { Bar } from 'react-chartjs-2'; // Import Bar chart component
+import { FaSmog } from 'react-icons/fa';
+import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 
-// Register the required chart components for Bar chart
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
+// Register the required chart components
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function UserDetailIOT() {
   const [iotData, setIotData] = useState<any[]>([]);
   const [historyData, setHistoryData] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [graphVisibility, setGraphVisibility] = useState<any>({}); // Track visibility for each pmId
-  const [selectedPMMap, setSelectedPMMap] = useState<any>({});
+  const [ip, setIp] = useState<string>(''); // State for IP input
+  const [pingResult, setPingResult] = useState<string>(''); // State for ping result
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         // Fetch IoT data
         const response = await axios.get('http://localhost:3005/api/getIoTData');
         const filteredData = response.data.filter(
-          (data: any) => data.pmId && data.status !== 'inactive' // Ensure pmId exists and status is not 'inactive'
+          (data: any) => data.pmId !== null && data.pmId !== undefined && data.status !== 'inactive'
         );
         setIotData(filteredData);
         setLoading(false);
@@ -73,39 +67,6 @@ export default function UserDetailIOT() {
       </div>
     );
   }
-  const prepareHistoryChartData = (history: any[], selectedPM: string) => {
-    const now = new Date();
-    // Filter records within the last 24 hours
-    const last24Hours = history.filter(record => {
-      const recordDate = new Date(record.timestamp);
-      return now.getTime() - recordDate.getTime() <= 24 * 60 * 60 * 1000;
-    });
-    // Sort records in ascending order by timestamp
-    last24Hours.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-    // Use the hour of each record as the label (e.g., "14:00")
-    const labels = last24Hours.map(record => {
-      const date = new Date(record.timestamp);
-      return `${date.getHours()}:00`;
-    });
-    const dataValues = last24Hours.map(record => record[selectedPM] || 0);
-
-    return {
-      labels,
-      datasets: [
-        {
-          label: selectedPM,
-          data: dataValues,
-          backgroundColor:
-            selectedPM === "PM1" ? '#34D399' :
-            selectedPM === "PM10" ? '#FBBF24' : '#F87171',
-          borderColor:
-            selectedPM === "PM1" ? '#34D399' :
-            selectedPM === "PM10" ? '#FBBF24' : '#F87171',
-          borderWidth: 2,
-        }
-      ]
-    };
-  };
 
   const getColors = (pmValue: number) => {
     if (pmValue <= 25) {
@@ -137,51 +98,68 @@ export default function UserDetailIOT() {
 
   const prepareChartData = (data: any) => {
     return {
-      labels: ['PM1', 'PM10', 'PM2.5'],
+      labels: ['PM1', 'PM10', 'PM2.5'], // กำหนด labels ให้เป็น PM1, PM10, PM2.5
       datasets: [
         {
-          label: 'PM1',
-          data: [data.PM1 || 0, 0, 0],
-          backgroundColor: '#34D399',
-          borderColor: '#34D399',
-          borderWidth: 2,
+          label: 'PM1', // ชื่อเส้นสำหรับ PM1
+          data: [data.PM1 || 0, 0, 0], // ข้อมูลสำหรับ PM1 (แค่ค่าเดียว)
+          borderColor: '#34D399', // สีเส้นสำหรับ PM1
+          borderWidth: 2, // ความหนาของเส้น
+          fill: false, // ไม่ให้เติมสีใต้เส้น
+          pointBackgroundColor: '#34D399', // สีจุดที่แสดงบนเส้น
+          pointBorderColor: '#34D399', // สีกรอบจุด
+          pointRadius: 5, // ขนาดจุด
+          tension: 0.1, // ความโค้งของเส้น
         },
         {
-          label: 'PM10',
-          data: [0, data.PM10 || 0, 0],
-          backgroundColor: '#FBBF24',
-          borderColor: '#FBBF24',
-          borderWidth: 2,
+          label: 'PM10', // ชื่อเส้นสำหรับ PM10
+          data: [0, data.PM10 || 0, 0], // ข้อมูลสำหรับ PM10 (แค่ค่าเดียว)
+          borderColor: '#FBBF24', // สีเส้นสำหรับ PM10
+          borderWidth: 2, // ความหนาของเส้น
+          fill: false, // ไม่ให้เติมสีใต้เส้น
+          pointBackgroundColor: '#FBBF24', // สีจุดที่แสดงบนเส้น
+          pointBorderColor: '#FBBF24', // สีกรอบจุด
+          pointRadius: 5, // ขนาดจุด
+          tension: 0.1, // ความโค้งของเส้น
         },
         {
-          label: 'PM2.5',
-          data: [0, 0, data.PM2_5 || 0],
-          backgroundColor: '#F87171',
-          borderColor: '#F87171',
-          borderWidth: 2,
+          label: 'PM2.5', // ชื่อเส้นสำหรับ PM2.5
+          data: [0, 0, data.PM2_5 || 0], // ข้อมูลสำหรับ PM2.5 (แค่ค่าเดียว)
+          borderColor: '#F87171', // สีเส้นสำหรับ PM2.5
+          borderWidth: 2, // ความหนาของเส้น
+          fill: false, // ไม่ให้เติมสีใต้เส้น
+          pointBackgroundColor: '#F87171', // สีจุดที่แสดงบนเส้น
+          pointBorderColor: '#F87171', // สีกรอบจุด
+          pointRadius: 5, // ขนาดจุด
+          tension: 0.1, // ความโค้งของเส้น
         },
       ],
+      options: {
+        responsive: true, // ทำให้กราฟตอบสนองต่อขนาดหน้าจอ
+        scales: {
+          y: {
+            beginAtZero: true, // เริ่มแกน Y จาก 0
+          },
+        },
+      },
     };
   };
+  
+  
 
-  // Toggle graph visibility
-  const toggleGraph = (pmId: string) => {
-    setGraphVisibility((prevState: any) => ({
-      ...prevState,
-      [pmId]: !prevState[pmId],
-    }));
+  // Function to test ping
+  const handlePing = async () => {
+    if (!ip) {
+      setPingResult('กรุณากรอก IP');
+      return;
+    }
+    try {
+      const response = await axios.post('http://localhost:3005/api/ping', { ip });
+      setPingResult(response.data.message);
+    } catch (err) {
+      setPingResult('ไม่สามารถ Ping ไปยัง IP นี้ได้');
+    }
   };
-
-  // Handle selection of PM parameter for a device's chart
-  const handleSelectPM = (pmId: string, param: string) => {
-    setSelectedPMMap((prevState: any) => ({
-      ...prevState,
-      [pmId]: param,
-    }));
-  };
-
-  // Filter out any device that doesn't have a pmId (already filtered earlier, but just in case)
-  const devicesWithPmId = iotData.filter((data: any) => data.pmId);
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -189,13 +167,9 @@ export default function UserDetailIOT() {
         คุณภาพอากาศ RMUTTO
       </h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
-        {devicesWithPmId.map((data, index) => {
+        {iotData.map((data, index) => {
           const pm2_5 = data.PM2_5 || 0;
           const { backgroundColor, fontColor, iconColor } = getColors(pm2_5);
-          // Use the selected PM parameter for this device; default to "PM2_5"
-          const selectedPM = selectedPMMap[data.pmId] || "PM2_5";
-          // Get history data for this device if available
-          const deviceHistory = historyData[data.pmId] || [];
 
           return (
             <div key={index} className={`rounded-lg shadow-lg p-6 space-y-4 text-gray-800 ${backgroundColor}`}>
@@ -218,60 +192,18 @@ export default function UserDetailIOT() {
                 {data.PM1 && <p className={`text-sm ${iconColor}`}>PM1: {data.PM1} µg/m³</p>}
               </div>
 
-              {/* Toggleable Chart with PM selection */}
+              {/* Display bar chart for PM data */}
               <div className="bg-white p-4 rounded-lg shadow-md">
-                <button
-                  onClick={() => toggleGraph(data.pmId)}
-                  className="flex items-center text-gray-700 text-sm font-medium hover:text-gray-800 mb-4"
-                >
-                  {graphVisibility[data.pmId] ? <FaChevronUp size={20} /> : <FaChevronDown size={20} />}
-                  <span className="ml-2">{graphVisibility[data.pmId] ? 'ซ่อนกราฟ' : 'แสดงกราฟ'}</span>
-                </button>
-
-                {graphVisibility[data.pmId] && (
-                  <>
-                    {/* PM Selection Buttons */}
-                    <div className="flex space-x-2 mb-4">
-                      {["PM1", "PM10", "PM2_5"].map((param) => (
-                        <button
-                          key={param}
-                          onClick={() => handleSelectPM(data.pmId, param)}
-                          className={`px-4 py-2 rounded-lg border ${
-                            selectedPM === param
-                              ? 'bg-indigo-600 text-white'
-                              : 'bg-white text-gray-800'
-                          } transition-colors duration-300`}
-                        >
-                          {param === "PM2_5" ? "PM2.5" : param}
-                        </button>
-                      ))}
-                    </div>
-                    {/* Historical Data Chart for Last 24 Hours */}
-                    <Bar
-                      data={prepareHistoryChartData(deviceHistory, selectedPM)}
-                      options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                          y: {
-                            beginAtZero: true,
-                          },
-                        },
-                      }}
-                      height={300}
-                      width={500}
-                      style={{ maxHeight: '300px', width: '100%' }}
-                    />
-                  </>
-                )}
+                <p className="text-gray-700 text-sm font-medium">กราฟระดับมลพิษ:</p>
+                <Bar data={prepareChartData(data)} />
               </div>
 
-              {/* Display historical data button */}
+              {/* Display historical data */}
               {historyData[data.pmId] && (
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <div className="mt-4">
                     <button
-                      onClick={() => window.location.href = `/CPC/User/DashboardIOT/${data.pmId}`}
+                      onClick={() => window.location.href = `/CPC/Admin/DashboardIOT/${data.pmId}`} // ส่ง pmId ผ่าน URL
                       className="inline-block bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg transform transition-all hover:bg-green-700 hover:scale-105"
                     >
                       ไปที่ Dashboard
@@ -279,10 +211,28 @@ export default function UserDetailIOT() {
                   </div>
                 </div>
               )}
+
+              {/* Input for IP and Ping */}
+              {/* <div className="mt-4">
+                <input
+                  type="text"
+                  placeholder="กรอก IP สำหรับ Ping"
+                  value={ip}
+                  onChange={(e) => setIp(e.target.value)}
+                  className="px-4 py-2 border rounded-lg w-full mb-2"
+                />
+                <button
+                  onClick={handlePing}
+                  className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg transform transition-all hover:bg-blue-700 hover:scale-105"
+                >
+                  ทดสอบ Ping
+                </button>
+                {pingResult && <p className="mt-2 text-sm text-gray-600">{pingResult}</p>}
+              </div> */}
             </div>
           );
         })}
       </div>
     </div>
   );
-}
+} 
