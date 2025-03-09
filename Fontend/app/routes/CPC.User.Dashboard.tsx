@@ -20,7 +20,6 @@ const UserDashboard = () => {
   });
   const [formErrors, setFormErrors] = useState<any>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUserRegistered, setIsUserRegistered] = useState(false);
   const navigate = useNavigate();
   const db = getFirestore();
 
@@ -41,9 +40,7 @@ const UserDashboard = () => {
           const userRegistered = localStorage.getItem('userRegistered');
           console.log("Checking user registration in Firestore...");
           if (!userRegistered) {
-            checkUserInFirestore(currentUser.uid, currentUser.email);
-          } else {
-            setIsUserRegistered(true);
+            checkUserInFirestore(currentUser.uid);
           }
         } else {
           navigate('/cpc/login');
@@ -58,16 +55,12 @@ const UserDashboard = () => {
   }, [navigate]);
 
   // Check if user is already registered in Firestore
-  const checkUserInFirestore = async (uid: string, email: string) => {
+  const checkUserInFirestore = async (uid: string) => {
     const docRef = doc(db, 'users', uid);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      const data = docSnap.data();
       console.log('User is already registered in Firestore');
       localStorage.setItem('userRegistered', 'true');
-      if (data?.userId === email) {
-        setIsUserRegistered(true); // Don't show notification button if userId matches email
-      }
     } else {
       console.log('User not found in Firestore, prompting for registration...');
     }
@@ -150,36 +143,36 @@ const UserDashboard = () => {
 
   // Show a loader while the data is being fetched
   if (loading) {
-    return (
-      <div className="flex flex-col justify-center items-center h-screen bg-gray-100">
-        <div className="flex items-center space-x-4">
-          <svg
-            className="animate-spin h-12 w-12 text-indigo-500"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4a4 4 0 100 8v4a8 8 0 01-8-8z"
-            ></path>
-          </svg>
-          <span className="text-indigo-600 text-xl font-medium">
+      return (
+        <div className="flex flex-col justify-center items-center h-screen bg-gray-100">
+          <div className="flex items-center space-x-4">
+            <svg
+              className="animate-spin h-12 w-12 text-indigo-500"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 100 8v4a8 8 0 01-8-8z"
+              ></path>
+            </svg>
+            <span className="text-indigo-600 text-xl font-medium">
             กรุณารอซักครู่ กำลังโหลดเนื้อหา...
-          </span>
+            </span>
+          </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
   return (
     <div className="bg-gray-100 min-h-screen">
@@ -191,31 +184,37 @@ const UserDashboard = () => {
         {user && (
           <div className="bg-white shadow-lg rounded-lg p-4 mb-8 flex items-center space-x-4">
             <img
-              src='/public/person-circle-svgrepo-com.svg'
+              src={user.photoURL || 'https://www.gravatar.com/avatar/placeholder.png'}
               alt="Profile"
               className="w-12 h-12 rounded-full"
             />
+            
             <div className="flex flex-col">
               <p className="text-lg font-semibold text-gray-600">{user.displayName}</p>
               <p className="text-gray-600">{user.email}</p>
             </div>
-            <button className="ml-auto text-red-600 hover:text-red-800">CPC_PM2.5</button>
-            <button onClick={handleLogout} className="ml-auto text-red-600 hover:text-red-800">
+            <button
+                className="ml-auto text-red-600 hover:text-red-800"
+              >CPC_PM2.5
+              </button>
+            <button
+              onClick={handleLogout}
+              className="ml-auto text-red-600 hover:text-red-800"
+            >
               <FaSignOutAlt size={24} />
             </button>
+            
           </div>
         )}
-        <UserDetailIOT />
-
-        {/* Button to open the registration form, only if user is not registered */}
-        {!isUserRegistered && (
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="fixed bottom-6 right-6 px-6 py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition duration-300"
-          >
-            รับการแจ้งเตือนผ่าน Email
-          </button>
-        )}
+        <UserDetailIOT/>
+        
+        {/* Button to open the registration form */}
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="fixed bottom-6 right-6 px-6 py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition duration-300"
+        >
+          รับการแจ้งเตือน
+        </button>
 
         {/* Modal for registration form */}
         {isModalOpen && (
@@ -311,6 +310,8 @@ const UserDashboard = () => {
             </div>
           </div>
         )}
+        
+        
       </div>
     </div>
   );
